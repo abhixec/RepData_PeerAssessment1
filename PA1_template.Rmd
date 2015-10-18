@@ -75,7 +75,6 @@ aggregate(steps~date,new_data,median)
 1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 ```{r,echo=TRUE}
 library(lubridate)
-data2 <- read.csv("activity-imp1.csv")
 
 new_data["days"] <- (new_dataDate <- as.Date(new_data$date))
 new_data["days"] <- wday(new_data$days, label=TRUE)
@@ -101,13 +100,20 @@ new_data$period2 <- (new_data$period)
 
 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 ```{r,echo=TRUE}
-Sys.setlocale("LC_TIME", "English")
-weekend <- c('Sat','Sun')
-weekday <- c('Mon','Tue','Wed','Thu','Fri')
+intervals<-unique(data$interval)
+Sys.setlocale("LC_TIME", "C") # Necessary in order to get English names for weekdays
+weekday <- factor( weekdays(as.Date(data$date)) %in% c("Saturday","Sunday"), labels = c("weekday", "weekend"))
+activityNoNA <- cbind(new_data, weekday)
 
-a <- transform(new_data,Day = factor(weekdays(as.Date(new_data$date),abbreviate=TRUE) %in% weekend, 
-                                     labels=c('weekday','weekend')))
-xyplot(steps ~ interval | Day, data = a, layout=c(1,2), type='l', ylab="Average steps per interval")
+weekendSteps <- NULL
+weekdaySteps <- NULL
+for(interval in split(activityNoNA, activityNoNA$interval)){
+  weekendSteps <- c(weekendSteps, mean(interval$steps[interval$weekday=="weekend"]))
+  weekdaySteps <- c(weekdaySteps, mean(interval$steps[interval$weekday=="weekday"]))
+}
+par(mfrow=c(2,1), mar = c(2, 4, 2, 2)) 
+plot(intervals, weekendSteps, type = "l", main = "Weekend", ylab = "Number of steps")
+plot(intervals, weekdaySteps, type = "l", main = "Weekday", ylab = "Number of steps") 
 
 ```
 

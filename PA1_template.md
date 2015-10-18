@@ -239,6 +239,54 @@ aggregate(steps~date,new_data,median)
 ## Are there differences in activity patterns between weekdays and weekends?
 1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 
+```r
+library(lubridate)
+
+new_data["days"] <- (new_dataDate <- as.Date(new_data$date))
+new_data["days"] <- wday(new_data$days, label=TRUE)
+
+days <- c("Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat")
+#days <- as.factor(days)
+
+
+new_data$period <- NA
+
+new_data$period[new_data$days=="Sat"] <- as.character("Weekend") 
+new_data$period[new_data$days=="Sun"] <- as.character("Weekend") 
+new_data$period[new_data$days=="Mon"] <- as.character("Weekday") 
+new_data$period[new_data$days=="Tues"] <- as.character("Weekday")  
+new_data$period[new_data$days=="Wed"] <- as.character("Weekday")  
+new_data$period[new_data$days=="Thurs"] <- as.character("Weekday")  
+new_data$period[new_data$days=="Fri"] <- as.character("Weekday")  
+
+new_data$period2 <- (new_data$period)
+```
+
 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
+```r
+intervals<-unique(data$interval)
+Sys.setlocale("LC_TIME", "C") # Necessary in order to get English names for weekdays
+```
+
+```
+## [1] "C"
+```
+
+```r
+weekday <- factor( weekdays(as.Date(data$date)) %in% c("Saturday","Sunday"), labels = c("weekday", "weekend"))
+activityNoNA <- cbind(new_data, weekday)
+
+weekendSteps <- NULL
+weekdaySteps <- NULL
+for(interval in split(activityNoNA, activityNoNA$interval)){
+  weekendSteps <- c(weekendSteps, mean(interval$steps[interval$weekday=="weekend"]))
+  weekdaySteps <- c(weekdaySteps, mean(interval$steps[interval$weekday=="weekday"]))
+}
+par(mfrow=c(2,1), mar = c(2, 4, 2, 2)) 
+plot(intervals, weekendSteps, type = "l", main = "Weekend", ylab = "Number of steps")
+plot(intervals, weekdaySteps, type = "l", main = "Weekday", ylab = "Number of steps") 
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
 
